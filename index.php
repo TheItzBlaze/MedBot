@@ -112,8 +112,8 @@ if (is_file($data)) {
   <div class="card">
     <header>
       <div>
-        <h1>🌡️ MedBot — Live Environment</h1>
-        <div class="sub">Auto-refresh every <span id="every">2</span>s • Control follow mode below</div>
+        <h1>MedBot — Live Environment</h1>
+        <div class="sub">Auto-refresh every <span id="every">0.5</span>s • Control follow mode below</div>
       </div>
       <div class="controls">
         <button id="toggleMode">Follow: …</button>
@@ -245,8 +245,9 @@ if (is_file($data)) {
 
   // start loops
   pullData();  setInterval(pullData, EVERY);
-  pullLog();   setInterval(pullLog, 1000);
-  pullState(); setInterval(pullState, 1500);
+  pullLog();   setInterval(pullLog, 500);
+  pullState(); setInterval(pullState 1000);
 </script>
 </body>
 </html>
+
