@@ -112,8 +112,8 @@ if (is_file($data)) {
   <div class="card">
     <header>
       <div>
-        <h1>🌡️ MedBot — Live Environment</h1>
-        <div class="sub">Auto-refresh every <span id="every">2</span>s • Control follow mode below</div>
+        <h1>MedBot — Live Environment</h1>
+        <div class="sub">Auto-refresh every <span id="every">0.5/span>s • Control follow mode below</div>
       </div>
       <div class="controls">
         <button id="toggleMode">Follow: …</button>
@@ -140,6 +140,10 @@ if (is_file($data)) {
       <div class="consoleCtrl">
         <button id="jumpEnd">Jump to end</button>
         <button id="pauseBtn">Pause</button>
+        <button id="tryLog" onclick="tryPullLog()">Fetch Log</button>
+        <button id="clear" onclick="clearConsole()">Clear</button>
+        <button id="resetLog" onclick="resetLogHistory()">Reset Logs</button>
+        <button id="clearHistory" onclick="clearLogHistory()">Clear History</button>
       </div>
     </div>
 
@@ -151,7 +155,8 @@ if (is_file($data)) {
 </div>
 
 <script>
-  const EVERY = 2000;
+  const EVERY = 500;
+  let logErr = 0;
   document.getElementById('every').textContent = EVERY/1000;
   const stateURL = 'state.php';
 
@@ -183,14 +188,31 @@ if (is_file($data)) {
   let logOffset = 0;
   let paused = false;
   const consoleEl = document.getElementById('console');
+  let historyLogs = "";
 
   function appendConsole(text){
     if (!text) return;
     const atEnd = consoleEl.scrollTop + consoleEl.clientHeight >= consoleEl.scrollHeight - 5;
     consoleEl.textContent += text;
+    historyLogs += text;
     if (atEnd) consoleEl.scrollTop = consoleEl.scrollHeight;
   }
-  async function pullLog(){
+  
+  function clearConsole() {
+      consoleEl.textContent = "";
+      appendConsole(""); // Fix vars
+  }
+  
+  function resetLogHistory(){
+      consoleEl.textContent = historyLogs;
+      appendConsole(""); //fix vars
+  }
+  
+  function clearLogHistory() {
+      historyLogs = "";
+  }
+  
+  async function pullLog(forceAppend=0){
     if (paused) return;
     try{
       const r = await fetch(`?log=1&after=${logOffset}`, {cache:'no-store'});
@@ -199,8 +221,17 @@ if (is_file($data)) {
         if (j.chunk) appendConsole(j.chunk);
         logOffset = j.offset;
       }
+      if (logErr == 1) {
+          logErr = 0;
+      }
     }catch(e){
-      appendConsole(`[${new Date().toLocaleTimeString()}] (client) log fetch failed\n`);
+        if (logErr == 0) {
+          appendConsole(`[${new Date().toLocaleTimeString()}] (client) log fetch failed\n`);
+          logErr = 1;
+        }
+        if (forceAppend == 1){
+          appendConsole(`[${new Date().toLocaleTimeString()}] (client) log fetch failed\n`);
+        }
     }
   }
 
@@ -239,14 +270,18 @@ if (is_file($data)) {
       });
     }catch(e){}
   }
+  
+  function tryPullLog(){
+    pullLog(1);
+  }
 
   document.getElementById('toggleMode').addEventListener('click', toggleMode);
   document.getElementById('resetFinish').addEventListener('click', resetFinish);
 
   // start loops
   pullData();  setInterval(pullData, EVERY);
-  pullLog();   setInterval(pullLog, 1000);
-  pullState(); setInterval(pullState, 1500);
+  pullLog(0);  setInterval(pullLog, 500, 0);
+  pullState(); setInterval(pullState, 1000);
 </script>
 </body>
 </html>
